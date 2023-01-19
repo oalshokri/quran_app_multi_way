@@ -48,32 +48,29 @@ class _MyHomePageState extends State<MyHomePage> {
   bool isLoading = false;
   dynamic data;
 
-  List<Text> all = [];
-
-  late bool isAr = false;
-
   late PageController pageController;
 
-  void getData() async {
+  getData(int page) async {
+    data = [];
     http.Response response = await http.get(
-      Uri.parse('http://api.alquran.cloud/v1/page/$currentPage/quran-uthmani'),
+      Uri.parse('http://api.alquran.cloud/v1/page/$page/quran-uthmani'),
     );
 
     var result = jsonDecode(response.body);
-    print(result);
     if (response.statusCode == 200) {
       setState(() {
         isLoading = true;
         data = result['data']['ayahs'] as List;
       });
     }
+    return null;
   }
 
   @override
   void initState() {
-    getData();
     super.initState();
     pageController = PageController(initialPage: 1);
+    getData(currentPage);
   }
 
   @override
@@ -87,62 +84,64 @@ class _MyHomePageState extends State<MyHomePage> {
                   itemCount: 604,
                   controller: pageController,
                   onPageChanged: (page) {
-                    print(page);
-                    data = [];
-
                     setState(() {
                       currentPage = page;
+                      getData(page);
                     });
-                    getData();
                   },
                   itemBuilder: (BuildContext context, int index) {
-                    return Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: RichText(
-                        overflow: TextOverflow.visible,
-                        textAlign: TextAlign.justify,
-                        locale: context.locale,
-                        text: TextSpan(
-                            text: '',
-                            recognizer: DoubleTapGestureRecognizer()
-                              ..onDoubleTap = () {
-                                setState(() {});
-                              },
-                            style: TextStyle(
-                              fontFamily: 'Kitab',
-                              // fontFamily: 'HafsSmart',
-                              color: Colors.black,
-                              fontSize: 24,
-                              // height: 2,
-                              textBaseline: TextBaseline.alphabetic,
-                            ),
-                            children: [
-                              for (int i = 0; i < data.length; i++) ...{
-                                TextSpan(
-                                  text: '${data[i]['text']}',
-                                ),
-                                WidgetSpan(
-                                  baseline: TextBaseline.alphabetic,
-                                  child: Container(
-                                    padding: EdgeInsets.all(8),
-                                    margin: EdgeInsets.symmetric(
-                                        horizontal: 6, vertical: 8),
-                                    decoration: BoxDecoration(
-                                      image: DecorationImage(
-                                        opacity: 0.5,
-                                        image: AssetImage(
-                                          'images/end.png',
-                                        ),
-                                      ),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Text('${data[i]['numberInSurah']}'),
+                    if (index == currentPage && data.length != 0) {
+                      return Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: RichText(
+                          overflow: TextOverflow.visible,
+                          textAlign: TextAlign.justify,
+                          locale: context.locale,
+                          text: TextSpan(
+                              text: '',
+                              recognizer: DoubleTapGestureRecognizer()
+                                ..onDoubleTap = () {
+                                  setState(() {});
+                                },
+                              style: TextStyle(
+                                fontFamily: 'Kitab',
+                                // fontFamily: 'HafsSmart',
+                                color: Colors.black,
+                                fontSize: 24,
+                                // height: 2,
+                                textBaseline: TextBaseline.alphabetic,
+                              ),
+                              children: [
+                                for (int i = 0; i < data.length; i++) ...{
+                                  TextSpan(
+                                    text: '${data[i]['text']}',
                                   ),
-                                ),
-                              }
-                            ]),
-                      ),
-                    );
+                                  WidgetSpan(
+                                    baseline: TextBaseline.alphabetic,
+                                    child: Container(
+                                      padding: EdgeInsets.all(8),
+                                      margin: EdgeInsets.symmetric(
+                                          horizontal: 6, vertical: 8),
+                                      decoration: BoxDecoration(
+                                        image: DecorationImage(
+                                          opacity: 0.5,
+                                          image: AssetImage(
+                                            'images/end.png',
+                                          ),
+                                        ),
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child:
+                                          Text('${data[i]['numberInSurah']}'),
+                                    ),
+                                  ),
+                                }
+                              ]),
+                        ),
+                      );
+                    } else {
+                      return Center(child: CircularProgressIndicator());
+                    }
                   },
                 ),
               ),
