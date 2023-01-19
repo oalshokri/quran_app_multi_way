@@ -1,11 +1,21 @@
 import 'dart:convert';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await EasyLocalization.ensureInitialized();
+
+  runApp(
+    EasyLocalization(
+        supportedLocales: [Locale('en', 'US'), Locale('ar', 'SA')],
+        path: 'assets',
+        fallbackLocale: Locale('en', 'US'),
+        child: MyApp()),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -14,6 +24,9 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      localizationsDelegates: context.localizationDelegates,
+      supportedLocales: context.supportedLocales,
+      locale: context.locale,
       title: 'Quran App',
       theme: ThemeData(
         primarySwatch: Colors.blue,
@@ -37,6 +50,10 @@ class _MyHomePageState extends State<MyHomePage> {
 
   List<Text> all = [];
 
+  late bool isAr = false;
+
+  late PageController pageController;
+
   void getData() async {
     http.Response response = await http.get(
       Uri.parse('http://api.alquran.cloud/v1/page/$currentPage/quran-uthmani'),
@@ -56,6 +73,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     getData();
     super.initState();
+    pageController = PageController(initialPage: 1);
   }
 
   @override
@@ -65,42 +83,67 @@ class _MyHomePageState extends State<MyHomePage> {
         child: !isLoading
             ? CircularProgressIndicator()
             : SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: RichText(
-                    textDirection: TextDirection.rtl,
-                    textAlign: TextAlign.justify,
-                    text: TextSpan(
-                      text: '',
-                      style: TextStyle(color: Colors.black),
-                      children: [
-                        for (var item in data) ...{
-                          TextSpan(
-                              text: '${item['text']}',
-                              style: TextStyle(fontSize: 24, height: 1.5),
-                              recognizer: DoubleTapGestureRecognizer()
-                                ..onDoubleTap = () {
-                                  print('navigate to signup screen');
-                                }),
-                          WidgetSpan(
-                            child: Container(
-                              padding: EdgeInsets.all(8),
-                              margin: EdgeInsets.symmetric(horizontal: 8),
-                              decoration: BoxDecoration(
-                                image: DecorationImage(
-                                  image: AssetImage('images/end.png'),
-                                ),
-                              ),
-                              child: Text(
-                                '${item['numberInSurah']}',
-                                style: TextStyle(fontSize: 12),
-                              ),
+                child: PageView.builder(
+                  itemCount: 604,
+                  controller: pageController,
+                  onPageChanged: (page) {
+                    print(page);
+                    data = [];
+
+                    setState(() {
+                      currentPage = page;
+                    });
+                    getData();
+                  },
+                  itemBuilder: (BuildContext context, int index) {
+                    return Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: RichText(
+                        overflow: TextOverflow.visible,
+                        textAlign: TextAlign.justify,
+                        locale: context.locale,
+                        text: TextSpan(
+                            text: '',
+                            recognizer: DoubleTapGestureRecognizer()
+                              ..onDoubleTap = () {
+                                setState(() {});
+                              },
+                            style: TextStyle(
+                              fontFamily: 'Kitab',
+                              // fontFamily: 'HafsSmart',
+                              color: Colors.black,
+                              fontSize: 24,
+                              // height: 2,
+                              textBaseline: TextBaseline.alphabetic,
                             ),
-                          )
-                        }
-                      ],
-                    ),
-                  ),
+                            children: [
+                              for (int i = 0; i < data.length; i++) ...{
+                                TextSpan(
+                                  text: '${data[i]['text']}',
+                                ),
+                                WidgetSpan(
+                                  baseline: TextBaseline.alphabetic,
+                                  child: Container(
+                                    padding: EdgeInsets.all(8),
+                                    margin: EdgeInsets.symmetric(
+                                        horizontal: 6, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      image: DecorationImage(
+                                        opacity: 0.5,
+                                        image: AssetImage(
+                                          'images/end.png',
+                                        ),
+                                      ),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text('${data[i]['numberInSurah']}'),
+                                  ),
+                                ),
+                              }
+                            ]),
+                      ),
+                    );
+                  },
                 ),
               ),
       ),
