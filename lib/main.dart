@@ -42,6 +42,7 @@ class _MyHomePageState extends State<MyHomePage> {
     );
 
     var result = jsonDecode(response.body);
+    print(result);
     if (response.statusCode == 200) {
       setState(() {
         isLoaded = true;
@@ -59,31 +60,46 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: !isLoaded
-          ? Center(child: CircularProgressIndicator())
-          : SafeArea(
-              child: RichText(
-                textDirection: TextDirection.rtl,
-                textAlign: TextAlign.justify,
-                text: TextSpan(
-                    text: '',
-                    style: TextStyle(color: Colors.black, fontSize: 21),
-                    // recognizer: LongPressGestureRecognizer()
-                    //   ..onLongPress=(){},
-                    children: [
-                      for (var item in data) ...{
-                        TextSpan(
-                          text: '${item['text']} ',
+      body: Center(
+        child: !isLoaded
+            ? CircularProgressIndicator()
+            : SafeArea(
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: ListView.builder(
+                          itemCount: data.length,
+                          itemBuilder: (context, index) {
+                            return Text(
+                              '${data[index]['text']} ${data[index]['numberInSurah']} ',
+                              style: TextStyle(fontSize: 24),
+                              textDirection: TextDirection.rtl,
+                            );
+                          }),
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        TextButton(
+                          onPressed: () {
+                            currentPage++;
+                            getData();
+                          },
+                          child: Text('next'),
                         ),
-                        WidgetSpan(
-                            child: Container(
-                          color: Colors.red,
-                          child: Text('${item['numberInSurah']} '),
-                        ))
-                      }
-                    ]),
+                        TextButton(
+                          onPressed: () {
+                            currentPage--;
+                            getData();
+                          },
+                          child: Text('previous'),
+                        ),
+                      ],
+                    )
+                  ],
+                ),
               ),
-            ),
+      ),
     );
   }
 }
