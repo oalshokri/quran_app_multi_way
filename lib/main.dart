@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -31,7 +32,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int currentPage = 1;
-  bool isLoaded = false;
+  bool isLoading = false;
   dynamic data;
 
   List<Text> all = [];
@@ -45,7 +46,7 @@ class _MyHomePageState extends State<MyHomePage> {
     print(result);
     if (response.statusCode == 200) {
       setState(() {
-        isLoaded = true;
+        isLoading = true;
         data = result['data']['ayahs'] as List;
       });
     }
@@ -61,42 +62,45 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
-        child: !isLoaded
+        child: !isLoading
             ? CircularProgressIndicator()
             : SafeArea(
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: ListView.builder(
-                          itemCount: data.length,
-                          itemBuilder: (context, index) {
-                            return Text(
-                              '${data[index]['text']} ${data[index]['numberInSurah']} ',
-                              style: TextStyle(fontSize: 24),
-                              textDirection: TextDirection.rtl,
-                            );
-                          }),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: RichText(
+                    textDirection: TextDirection.rtl,
+                    textAlign: TextAlign.justify,
+                    text: TextSpan(
+                      text: '',
+                      style: TextStyle(color: Colors.black),
                       children: [
-                        TextButton(
-                          onPressed: () {
-                            currentPage++;
-                            getData();
-                          },
-                          child: Text('next'),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            currentPage--;
-                            getData();
-                          },
-                          child: Text('previous'),
-                        ),
+                        for (var item in data) ...{
+                          TextSpan(
+                              text: '${item['text']}',
+                              style: TextStyle(fontSize: 24, height: 1.5),
+                              recognizer: DoubleTapGestureRecognizer()
+                                ..onDoubleTap = () {
+                                  print('navigate to signup screen');
+                                }),
+                          WidgetSpan(
+                            child: Container(
+                              padding: EdgeInsets.all(8),
+                              margin: EdgeInsets.symmetric(horizontal: 8),
+                              decoration: BoxDecoration(
+                                image: DecorationImage(
+                                  image: AssetImage('images/end.png'),
+                                ),
+                              ),
+                              child: Text(
+                                '${item['numberInSurah']}',
+                                style: TextStyle(fontSize: 12),
+                              ),
+                            ),
+                          )
+                        }
                       ],
-                    )
-                  ],
+                    ),
+                  ),
                 ),
               ),
       ),
